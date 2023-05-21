@@ -23,7 +23,7 @@ async function getFileTree(hostStr) {
     }
 
     let startTime = Date.now();
-    console.log(`[FTP | ${host}] Fetching file tree`);
+    console.log(`[FTP | ${maskHost(host)}] Fetching file tree`);
 
     let fileTree = {
         path: '',
@@ -54,11 +54,11 @@ async function getFileTree(hostStr) {
                 lastUpdated: Date.now(),
             }
         } catch(e) {
-            console.log(`[FTP | ${host}] Could not fetch file tree within ${CLIENT_TIMEOUT}ms: Supplying default data`);
+            console.log(`[FTP | ${maskHost(host)}] Could not fetch file tree within ${CLIENT_TIMEOUT}ms: Supplying default data`);
             return fileTree;
         }
     }
-    console.log(`[FTP | ${host}] Fetched file tree (took ${Date.now() - startTime}ms | ${cached ? "CACHE HIT" : "CACHE MISS | " + (cacheExpired ? "EXPIRED" : "UNPOPULATED")})`);
+    console.log(`[FTP | ${maskHost(host)}] Fetched file tree (took ${Date.now() - startTime}ms | ${cached ? "CACHE HIT" : "CACHE MISS | " + (cacheExpired ? "EXPIRED" : "UNPOPULATED")})`);
     return fileTree;
 }
 
@@ -181,3 +181,11 @@ app.listen(port, '0.0.0.0', () => {
 process.on("uncaughtException", err => {
     console.error(err);
 })
+
+function maskHost(host) {
+    if(host.length <= 8) {
+        return host.substr(0, host.length-Math.ceil(host.length/4)) + '*'.repeat(Math.ceil(host.length/4));
+    } else {
+        return host.substr(0, 8) + '*'.repeat(host.length - 8);
+    }
+}
