@@ -95,8 +95,10 @@ async function readPath(client, parentDir) {
 }
 
 const express = require('express');
-const app = express()
-const port = 80
+const cors = require('cors');
+const app = express();
+app.use(cors());
+const port = 80;
 
 const staticData = {
     note: "No files are hosted on this server, this is simply a router",
@@ -138,7 +140,7 @@ app.get('*', async (req, res) => {
 
             res.setHeader('Content-Type', 'application/octet-stream');
             if(curr.size) res.setHeader('Content-Length', curr.size);
-            res.setHeader('Transfer-Encoding', 'chunked');
+            //res.setHeader('Transfer-Encoding', 'chunked');
 
             curl.setOpt(Curl.option.URL, `ftp://${search.get("host")}/${curr.path}`);
             if(req.headers['range'] != undefined) curl.setOpt(Curl.option.RANGE, req.headers['range']);
