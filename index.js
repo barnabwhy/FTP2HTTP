@@ -258,3 +258,15 @@ function checkDownload(ip) {
     }
     return false;
 }
+
+function purgeExpiredIPs() {
+    let startSize = Object.keys(downloadPermIPs).length;
+    for(let ip of Object.keys(downloadPermIPs)) {
+        if(Date.now() - downloadPermIPs[ip] > DOWNLOAD_EXPIRY)
+            setCanDownload(ip, false);
+    }
+    let purged = startSize - Object.keys(downloadPermIPs).length;
+    console.log(`[WEB] Purged ${purged} expired IP access ${purged == 1 ? 'entry' : 'entries'}`)
+}
+
+setInterval(purgeExpiredIPs, DOWNLOAD_EXPIRY);
