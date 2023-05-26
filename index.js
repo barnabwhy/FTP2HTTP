@@ -97,7 +97,29 @@ async function readPath(client, parentDir) {
 const express = require('express');
 const cors = require('cors');
 const app = express();
+
 app.use(cors());
+
+async function updateProxyIPs() {
+    let proxyIPList = ["loopback"];
+
+    let ipv4 = await fetch("https://www.cloudflare.com/ips-v4");
+    proxyIPList = proxyIPList.concat((await ipv4.text()).split("\n"));
+
+    let ipv6 = await fetch("https://www.cloudflare.com/ips-v6");
+    proxyIPList = proxyIPList.concat((await ipv6.text()).split("\n"));
+
+    app.set('trust proxy', proxyIPList);
+    console.log(`[WEB] Updated trusted proxy list (${proxyIPList.length} entries)`);
+}
+
+updateProxyIPs();
+setInterval(updateProxyIPs, 6 * 60 * 60000); // update every 6 hours
+
+app.set('trust proxy', (ip) => {
+    return proxyIPList.indexOf(ip) != -1;
+}) 
+
 const port = 80;
 
 const staticData = {
