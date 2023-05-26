@@ -251,7 +251,6 @@ function setCanDownload(ip, allowed) {
 const DOWNLOAD_EXPIRY = 30 * 60000; // 30 minutes
 function checkDownload(ip) {
     if(downloadPermIPs[ip] != undefined) {
-        console.log(Date.now() - downloadPermIPs[ip])
         if(Date.now() - downloadPermIPs[ip] < DOWNLOAD_EXPIRY)
             return true;
         else
