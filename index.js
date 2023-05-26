@@ -6,6 +6,7 @@ const TREE_CACHE_MS = 600000; // 10 minutes
 const MAX_FILE_DOWNLOAD_SPEED = 20971520 // 20MB/s
 
 let treeCache = {};
+let downloadPermIPs = {};
 
 async function getFileTree(hostStr) {
     let host = hostStr.includes("@") ? hostStr.split("@")[1] : hostStr;
@@ -132,6 +133,8 @@ app.get('/', async (req, res) => {
         return res.sendStatus(400);
     }
 
+    setCanDownload(req.ip, true);
+
     let tree = await getFileTree(search.get("host"));
     res.json(Object.assign({}, tree, staticData));
 });
@@ -157,6 +160,14 @@ app.get('*', async (req, res) => {
     }
     if(curr) {
         if(search.has("download") && curr.type == "file") {
+            if(!checkDownload(req.ip)) {
+                res.status(403);
+                res.end();
+                return;
+            }
+
+            setCanDownload(req.ip, true);
+
             const curl = new Curl();
             const close = curl.close.bind(curl);
 
@@ -192,6 +203,8 @@ app.get('*', async (req, res) => {
 
             curl.perform();
         } else {
+            setCanDownload(req.ip, true);
+    
             res.json(Object.assign({}, curr, staticData));
         }
     } else
@@ -224,4 +237,25 @@ function parseShortDate(short) {
         date.setDay(new Date().getDay()); // Set month to current because it isn't in the date string
     }
     return date.getTime();
+}
+
+function setCanDownload(ip, allowed) {
+    if(allowed) {
+        downloadPermIPs[ip] = Date.now();
+    } else {
+        downloadPermIPs[ip] = undefined;
+        delete downloadPermIPs[ip];
+    }
+}
+
+const DOWNLOAD_EXPIRY = 30 * 60000; // 30 minutes
+function checkDownload(ip) {
+    if(downloadPermIPs[ip] != undefined) {
+        console.log(Date.now() - downloadPermIPs[ip])
+        if(Date.now() - downloadPermIPs[ip] < DOWNLOAD_EXPIRY)
+            return true;
+        else
+            setCanDownload(ip, false);
+    }
+    return false;
 }
