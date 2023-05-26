@@ -1,4 +1,4 @@
-const FTP = require("basic-ftp")
+const FTP = require("basic-ftp");
 const { Curl } = require("node-libcurl");
 
 const CLIENT_TIMEOUT = 30000; // 30 seconds
@@ -84,7 +84,7 @@ async function readPath(client, parentDir) {
                     path,
                     name: item.name,
                     size: item.size,
-                    date: item.modifiedAt,
+                    date: item.modifiedAt || parseShortDate(item.rawModifiedAt),
                 })
             }
         }
@@ -190,4 +190,16 @@ function maskHost(host) {
     } else {
         return host.substr(0, 8) + '*'.repeat(host.length - 8);
     }
+}
+
+function parseShortDate(short) {
+    let date = new Date(short);
+    if(short.match(/^[A-Za-z]+ \d+ \d+:\d+$/)) {
+        date.setFullYear(new Date().getFullYear()); // Set year to current because it isn't in the date string
+    } else if(short.match(/^\d+:\d+$/)) {
+        date.setFullYear(new Date().getFullYear()); // Set year to current because it isn't in the date string
+        date.setMonth(new Date().getMonth()); // Set month to current because it isn't in the date string
+        date.setDay(new Date().getDay()); // Set month to current because it isn't in the date string
+    }
+    return date.getTime();
 }
